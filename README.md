@@ -7,6 +7,8 @@ such as "something funny under 2 hours".
 
 Built as the Ordinal take-home.
 
+**Live:** https://marquee-khaki.vercel.app
+
 ## What to look at
 
 | Feature | Where | Why it is interesting |

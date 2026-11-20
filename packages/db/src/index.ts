@@ -24,10 +24,11 @@ export async function toggleWatchlist(
 ): Promise<boolean> {
   const { count } = await database.watchlistItem.deleteMany({ where: { viewerId, movieId } });
   if (count > 0) return false;
-  await database.watchlistItem.upsert({
-    where: { viewerId_movieId: { viewerId, movieId } },
-    create: { viewerId, movieId },
-    update: {},
+  // INSERT … ON CONFLICT DO NOTHING: a concurrent toggle that saved the same movie first is not an
+  // error (an upsert can still race on the unique key and throw P2002).
+  await database.watchlistItem.createMany({
+    data: [{ viewerId, movieId }],
+    skipDuplicates: true,
   });
   return true;
 }
