@@ -77,6 +77,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
       - run: pnpm -C packages/db db:deploy
       # Next.js and Turbopack keep their build cache in .next/cache; persisting it speeds up the
       # production build the Playwright web server runs.
