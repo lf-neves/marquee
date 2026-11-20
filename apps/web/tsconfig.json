@@ -1,0 +1,18 @@
+{
+  "extends": "@marquee/tsconfig/nextjs.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "paths": {
+      "#/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "src",
+    "e2e",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

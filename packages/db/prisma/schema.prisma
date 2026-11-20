@@ -1,0 +1,21 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// A movie saved by an anonymous viewer. The viewer id lives in an httpOnly cookie; there are no
+/// accounts, so the row holds nothing that identifies a person.
+model WatchlistItem {
+  viewerId String   @map("viewer_id") @db.Uuid
+  movieId  Int      @map("movie_id")
+  addedAt  DateTime @default(now()) @map("added_at") @db.Timestamptz(3)
+
+  @@id([viewerId, movieId])
+  @@index([viewerId, addedAt(sort: Desc)])
+  @@map("watchlist_items")
+}

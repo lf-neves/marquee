@@ -1,0 +1,5 @@
+{
+  "extends": "@marquee/tsconfig/base.json",
+  "compilerOptions": { "types": ["node"] },
+  "include": ["src", "prisma.config.ts"]
+}

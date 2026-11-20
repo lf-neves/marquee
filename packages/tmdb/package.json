@@ -1,0 +1,24 @@
+{
+  "name": "@marquee/tmdb",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./client": "./src/client.ts",
+    "./types": "./src/types.ts",
+    "./images": "./src/images.ts",
+    "./genres": "./src/genres.ts",
+    "./fixtures": "./src/fixtures/fetch.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@marquee/tsconfig": "workspace:*",
+    "typescript": "7.0.2"
+  }
+}

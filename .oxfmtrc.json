@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "jsxSingleQuote": false,
+  "trailingComma": "all",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "endOfLine": "lf",
+  "ignorePatterns": [
+    "packages/db/src/generated",
+    "**/.next",
+    "**/node_modules",
+    "**/.turbo",
+    "**/playwright-report",
+    "**/test-results",
+    "pnpm-lock.yaml",
+    "**/next-env.d.ts",
+    "*.md"
+  ]
+}

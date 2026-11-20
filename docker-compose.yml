@@ -1,0 +1,14 @@
+# Local Postgres for the watchlist. `pnpm db:up` starts it; the data is disposable.
+services:
+  db:
+    image: postgres:18-alpine
+    ports:
+      - '54339:5432'
+    environment:
+      POSTGRES_USER: marquee
+      POSTGRES_PASSWORD: marquee
+      POSTGRES_DB: marquee
+    volumes:
+      - marquee-db:/var/lib/postgresql
+volumes:
+  marquee-db:
