@@ -1,12 +1,18 @@
 'use client';
 
+import { type MovieSummary } from '@marquee/tmdb/types';
 import { Bookmark } from 'lucide-react';
 import { cn } from '#/lib/utils';
 import { Button } from '../ui/button';
-import { useWatchlistEnabled, useWatchlistIds, useWatchlistToggle } from './watchlist-provider';
+import {
+  useWatchlistEnabled,
+  useWatchlistIdsQuery,
+  useWatchlistToggle,
+} from './watchlist-provider';
 
 type WatchlistButtonProps = {
-  movie: { id: number; title: string };
+  /** The whole summary, so the movie can appear in My List before the server answers. */
+  movie: MovieSummary;
   /** `icon` sits on artwork; `screen` and `ghost` are labelled buttons for dark bands and themed surfaces. */
   variant?: 'icon' | 'screen' | 'ghost';
   className?: string;
@@ -51,11 +57,12 @@ export function WatchlistButton({ movie, variant = 'screen', className }: Watchl
 
 export function WatchlistCount() {
   const enabled = useWatchlistEnabled();
-  const count = useWatchlistIds().length;
-  if (!enabled) return null;
+  const ids = useWatchlistIdsQuery();
+  // Nothing until the saved ids are known; a placeholder 0 would read as an empty watchlist.
+  if (!enabled || ids === undefined) return null;
   return (
     <span className="rounded-full bg-accent-soft px-1.5 py-[3px] font-mono text-[11px] leading-none text-accent-ink tabular-nums">
-      {count}
+      {ids.length}
     </span>
   );
 }

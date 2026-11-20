@@ -1,6 +1,6 @@
 import 'server-only';
 import { type WatchlistStore } from '@marquee/api';
-import { type Database, createDatabase, listWatchlist, toggleWatchlist } from '@marquee/db';
+import { type Database, createDatabase, listWatchlist, setWatchlistItem } from '@marquee/db';
 import { env } from './env';
 
 // One client per server instance; dev reloads reuse it instead of opening new pools.
@@ -17,6 +17,6 @@ export function watchlistStore(): WatchlistStore | null {
   if (!db) return null;
   return {
     list: (viewerId) => listWatchlist(db, viewerId),
-    toggle: (input) => toggleWatchlist(db, input),
+    set: (input) => setWatchlistItem(db, input),
   };
 }

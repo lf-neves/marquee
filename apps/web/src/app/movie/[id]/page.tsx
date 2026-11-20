@@ -14,6 +14,7 @@ import {
 } from '#/components/movie/watch-options';
 import { WatchlistButton } from '#/components/watchlist/watchlist-button';
 import { dateText, languageText, moneyText, runtimeText } from '#/lib/format';
+import { summaryOf } from '#/lib/movie-card';
 import { movieSegment, parseMovieSegment, paths } from '#/lib/paths';
 import { movieArtTransitionName } from '#/lib/transitions';
 import { getMovie, getTrending } from '#/server/catalog';
@@ -74,6 +75,7 @@ async function MovieHero({ params }: Pick<PageProps<'/movie/[id]'>, 'params'>) {
             alt=""
             sizes="100vw"
             preload
+            blurDataUrl={movie.backdropPath ? movie.blur.backdrop : movie.blur.poster}
           />
         </div>
       </ViewTransition>
@@ -118,7 +120,7 @@ async function MovieHero({ params }: Pick<PageProps<'/movie/[id]'>, 'params'>) {
               <WatchNowButton movieId={movie.id} />
             </Suspense>
             {movie.trailer ? <TrailerDialog title={movie.title} trailer={movie.trailer} /> : null}
-            <WatchlistButton movie={{ id: movie.id, title: movie.title }} variant="screen" />
+            <WatchlistButton movie={summaryOf(movie)} variant="screen" />
           </div>
           <div className="flex flex-wrap items-center gap-[18px]">
             <InfoDialog

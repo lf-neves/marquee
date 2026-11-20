@@ -1,4 +1,4 @@
-import { type MovieSummary } from '@marquee/tmdb/types';
+import { type MovieCard } from '#/lib/movie-card';
 import { type Route } from 'next';
 import Link from 'next/link';
 import { useId } from 'react';
@@ -7,7 +7,7 @@ import { RowScroller } from './row-scroller';
 
 type MovieRowProps = {
   title: string;
-  movies: MovieSummary[];
+  movies: MovieCard[];
   /** A short reason the row exists, shown next to the title. */
   why?: string;
   seeAll?: { href: Route; label?: string };

@@ -1,5 +1,6 @@
 'use client';
 
+import { type MovieSummary } from '@marquee/tmdb/types';
 import { type Route } from 'next';
 import Link from 'next/link';
 import { ViewTransition, startTransition, useState } from 'react';
@@ -22,6 +23,10 @@ export type BillboardMovie = {
   score: number;
   voteCount: number;
   backdropPath: string | null;
+  /** Inline blur-up preview of the backdrop. */
+  blur: string | null;
+  /** What the watchlist stores when this movie is saved. */
+  summary: MovieSummary;
   trailer: { youtubeKey: string; name: string } | null;
 };
 
@@ -41,6 +46,7 @@ export function Billboard({ movies }: { movies: BillboardMovie[] }) {
             alt=""
             sizes="(max-width: 719px) 100vw, 72vw"
             preload={index === 0}
+            blurDataUrl={movie.blur}
           />
         </div>
       </ViewTransition>
@@ -68,7 +74,7 @@ export function Billboard({ movies }: { movies: BillboardMovie[] }) {
             <Link href={movie.href}>View details</Link>
           </Button>
           {movie.trailer ? <TrailerDialog title={movie.title} trailer={movie.trailer} /> : null}
-          <WatchlistButton movie={movie} variant="screen" />
+          <WatchlistButton movie={movie.summary} variant="screen" />
         </div>
         <div
           role="group"

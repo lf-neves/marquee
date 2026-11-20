@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { createDatabase, listWatchlist, toggleWatchlist, type Database } from './index';
+import { createDatabase, listWatchlist, setWatchlistItem, type Database } from './index';
 
 // The repository keeps one .env at its root, loaded the same way as prisma.config.ts.
 if (!process.env.DATABASE_URL) {
@@ -29,13 +29,30 @@ describe('watchlist', () => {
     await database.$disconnect();
   });
 
-  test('toggling saves a movie and toggling again removes it', async () => {
+  const save = (viewerId: string, movieId: number) =>
+    setWatchlistItem(database, { viewerId, movieId, saved: true });
+  const remove = (viewerId: string, movieId: number) =>
+    setWatchlistItem(database, { viewerId, movieId, saved: false });
+
+  test('saves a movie and removes it', async () => {
     const viewerId = newViewer();
 
-    expect(await toggleWatchlist(database, { viewerId, movieId: 603 })).toBe(true);
+    await save(viewerId, 603);
     expect(await listWatchlist(database, viewerId)).toEqual([603]);
 
-    expect(await toggleWatchlist(database, { viewerId, movieId: 603 })).toBe(false);
+    await remove(viewerId, 603);
+    expect(await listWatchlist(database, viewerId)).toEqual([]);
+  });
+
+  test('saving or removing twice leaves the same state', async () => {
+    const viewerId = newViewer();
+
+    await save(viewerId, 603);
+    await save(viewerId, 603);
+    expect(await listWatchlist(database, viewerId)).toEqual([603]);
+
+    await remove(viewerId, 603);
+    await remove(viewerId, 603);
     expect(await listWatchlist(database, viewerId)).toEqual([]);
   });
 
@@ -44,7 +61,7 @@ describe('watchlist', () => {
 
     // Timestamps have millisecond precision, so spacing the saves keeps the order unambiguous.
     for (const movieId of [11, 22, 33]) {
-      await toggleWatchlist(database, { viewerId, movieId });
+      await save(viewerId, movieId);
       await sleep(10);
     }
 
@@ -55,29 +72,22 @@ describe('watchlist', () => {
     const first = newViewer();
     const second = newViewer();
 
-    await toggleWatchlist(database, { viewerId: first, movieId: 603 });
-    await toggleWatchlist(database, { viewerId: second, movieId: 604 });
-    expect(await listWatchlist(database, first)).toEqual([603]);
-    expect(await listWatchlist(database, second)).toEqual([604]);
-
-    // Removing a movie for one viewer leaves the same movie saved for the other.
+    await save(first, 603);
+    await save(second, 604);
     await sleep(10);
-    await toggleWatchlist(database, { viewerId: second, movieId: 603 });
-    await toggleWatchlist(database, { viewerId: first, movieId: 603 });
+    await save(second, 603);
+    await remove(first, 603);
+
     expect(await listWatchlist(database, first)).toEqual([]);
     expect(await listWatchlist(database, second)).toEqual([603, 604]);
   });
 
-  test('concurrent toggles of the same movie never throw', async () => {
+  test('concurrent saves of the same movie never throw', async () => {
     const viewerId = newViewer();
 
-    const results = await Promise.allSettled([
-      toggleWatchlist(database, { viewerId, movieId: 603 }),
-      toggleWatchlist(database, { viewerId, movieId: 603 }),
-    ]);
+    const results = await Promise.allSettled([save(viewerId, 603), save(viewerId, 603)]);
 
     expect(results.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
-    // However the two interleave, the row exists at most once.
-    expect((await listWatchlist(database, viewerId)).length).toBeLessThanOrEqual(1);
+    expect(await listWatchlist(database, viewerId)).toEqual([603]);
   });
 });

@@ -53,7 +53,7 @@ function AssistantMessage({
   return (
     <div className="flex gap-3">
       <BotAvatar />
-      <div className="grid min-w-0 flex-1 gap-3 pt-1">
+      <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] gap-3 pt-1">
         {waiting ? (
           <div className="flex items-center gap-3 pt-1.5 text-sm text-fg-muted">
             <span className="flex gap-[5px]" aria-hidden>
@@ -65,7 +65,7 @@ function AssistantMessage({
           </div>
         ) : null}
         {turn.text ? (
-          <p className="whitespace-pre-wrap">
+          <p className="break-words whitespace-pre-wrap">
             {turn.text}
             {streaming ? (
               <span
@@ -91,7 +91,7 @@ function AssistantMessage({
             role="alert"
             className="flex flex-wrap items-center gap-3 rounded-[12px] border border-line bg-surface-2 px-3.5 py-3 text-sm"
           >
-            <span className="flex-1">{turn.error.message}</span>
+            <span className="min-w-0 flex-1 break-words">{turn.error.message}</span>
             {turn.error.code !== 'refused' ? (
               <button type="button" className={askButton.ghost} onClick={onRetry}>
                 Try again
@@ -190,8 +190,8 @@ export function AskPanel({
   const lastAnswer = lastTurn?.role === 'assistant' ? lastTurn : undefined;
 
   return (
-    <div className="flex h-full flex-col">
-      <header className="flex items-center justify-between gap-2.5 border-b border-line py-3 pr-3.5 pl-5">
+    <div className="flex h-full max-h-dvh min-h-0 min-w-0 flex-col">
+      <header className="flex items-center justify-between gap-2.5 border-b border-line pt-[max(12px,env(safe-area-inset-top,0px))] pr-3.5 pb-3 pl-5 max-[719px]:pl-4">
         <h2 className="font-semibold">Ask Marquee</h2>
         <div className="flex gap-2">
           <button
@@ -214,17 +214,17 @@ export function AskPanel({
           const log = event.currentTarget;
           stickToBottom.current = log.scrollHeight - log.scrollTop - log.clientHeight < 80;
         }}
-        className="grid flex-1 content-start gap-[22px] overflow-y-auto px-6 pt-6 pb-2 max-[719px]:px-4 max-[719px]:pt-[18px]"
+        className="grid min-h-0 min-w-0 flex-1 content-start gap-[22px] overflow-x-hidden overflow-y-auto overscroll-contain px-6 pt-6 pb-2 max-[719px]:px-4 max-[719px]:pt-[18px]"
       >
         {turns.length === 0 ? (
-          <div className="grid justify-items-center gap-[18px] pt-[12vh] text-center">
+          <div className="grid justify-items-center gap-[18px] pt-[12dvh] text-center">
             <span
               className="grid size-11 place-items-center rounded-full bg-accent-soft text-accent-ink"
               aria-hidden
             >
               <Sparkles className="size-5" />
             </span>
-            <h3 className="text-[28px] font-semibold tracking-[-0.02em]">
+            <h3 className="text-[28px] max-[519px]:text-2xl font-semibold tracking-[-0.02em]">
               What do you feel like watching?
             </h3>
             <div className="flex max-w-[560px] flex-wrap justify-center gap-2">
@@ -244,7 +244,7 @@ export function AskPanel({
           turns.map((turn) =>
             turn.role === 'user' ? (
               <div key={turn.id} className="flex justify-end">
-                <p className="max-w-[75%] rounded-[20px] bg-surface-2 px-4 py-2.5 whitespace-pre-wrap">
+                <p className="max-w-[75%] min-w-0 rounded-[20px] bg-surface-2 px-4 py-2.5 break-words whitespace-pre-wrap max-[519px]:max-w-[88%]">
                   {turn.text}
                 </p>
               </div>

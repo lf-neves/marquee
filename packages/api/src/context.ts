@@ -20,7 +20,7 @@ export type Catalog = {
 
 export type WatchlistStore = {
   list: (viewerId: string) => Promise<number[]>;
-  toggle: (input: { viewerId: string; movieId: number }) => Promise<boolean>;
+  set: (input: { viewerId: string; movieId: number; saved: boolean }) => Promise<void>;
 };
 
 /** The anonymous viewer behind a request. `getOrCreate` issues an id the first time one is needed. */

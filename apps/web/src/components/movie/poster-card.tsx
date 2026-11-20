@@ -1,5 +1,5 @@
 import { genreName } from '@marquee/tmdb/genres';
-import { type MovieSummary } from '@marquee/tmdb/types';
+import { type MovieCard, summaryOf } from '#/lib/movie-card';
 import { paths } from '#/lib/paths';
 import { WatchlistButton } from '../watchlist/watchlist-button';
 import { MorphSource, MovieLink } from './movie-link';
@@ -14,7 +14,7 @@ export function PosterCard({
   rank,
   preload = false,
 }: {
-  movie: MovieSummary;
+  movie: MovieCard;
   rank?: number;
   preload?: boolean;
 }) {
@@ -31,6 +31,7 @@ export function PosterCard({
                 alt=""
                 sizes={posterSizes}
                 preload={preload}
+                blurDataUrl={movie.blur?.poster}
               />
             </div>
           </MorphSource>
@@ -47,13 +48,18 @@ export function PosterCard({
           ) : null}
         </div>
         <div>
-          <h3 className="text-[15px] leading-tight font-semibold">{movie.title}</h3>
+          <h3
+            title={movie.title}
+            className="line-clamp-2 text-[15px] leading-tight font-semibold break-words"
+          >
+            {movie.title}
+          </h3>
           <p className="mt-0.5 font-mono text-[12.5px] text-fg-muted">
             {[movie.year, genre].filter(Boolean).join(' · ')}
           </p>
         </div>
       </MovieLink>
-      <WatchlistButton movie={{ id: movie.id, title: movie.title }} variant="icon" />
+      <WatchlistButton movie={summaryOf(movie)} variant="icon" />
     </article>
   );
 }

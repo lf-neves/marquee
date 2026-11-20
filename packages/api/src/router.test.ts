@@ -20,11 +20,9 @@ function memoryWatchlist(): WatchlistStore {
   const saved = new Map<string, number[]>();
   return {
     list: async (viewerId) => saved.get(viewerId) ?? [],
-    toggle: async ({ viewerId, movieId }) => {
-      const ids = saved.get(viewerId) ?? [];
-      const has = ids.includes(movieId);
-      saved.set(viewerId, has ? ids.filter((id) => id !== movieId) : [movieId, ...ids]);
-      return !has;
+    set: async ({ viewerId, movieId, saved: shouldSave }) => {
+      const ids = (saved.get(viewerId) ?? []).filter((id) => id !== movieId);
+      saved.set(viewerId, shouldSave ? [movieId, ...ids] : ids);
     },
   };
 }
@@ -93,23 +91,29 @@ describe('watchlist', () => {
     expect(await api.watchlist.list()).toEqual([]);
   });
 
-  test('toggle saves, lists newest first, then removes', async () => {
+  test('set saves, lists newest first, then removes', async () => {
     const api = caller();
 
-    await api.watchlist.toggle({ movieId: 155 });
-    expect(await api.watchlist.toggle({ movieId: 603 })).toEqual({ movieId: 603, saved: true });
+    await api.watchlist.set({ movieId: 155, saved: true });
+    expect(await api.watchlist.set({ movieId: 603, saved: true })).toEqual({
+      movieId: 603,
+      saved: true,
+    });
     expect((await api.watchlist.list()).map((movie) => movie.title)).toEqual([
       'The Matrix',
       'The Dark Knight',
     ]);
 
-    expect(await api.watchlist.toggle({ movieId: 155 })).toEqual({ movieId: 155, saved: false });
+    expect(await api.watchlist.set({ movieId: 155, saved: false })).toEqual({
+      movieId: 155,
+      saved: false,
+    });
     expect(await api.watchlist.ids()).toEqual([603]);
   });
 
-  test('toggle explains that the watchlist needs a database', async () => {
+  test('set explains that the watchlist needs a database', async () => {
     await expect(
-      caller({ watchlist: null }).watchlist.toggle({ movieId: 155 }),
+      caller({ watchlist: null }).watchlist.set({ movieId: 155, saved: true }),
     ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' });
   });
 });

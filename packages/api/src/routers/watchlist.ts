@@ -32,12 +32,13 @@ export const watchlistRouter = createRouter({
     return movies.flatMap((movie) => (movie ? [toSummary(movie)] : []));
   }),
 
-  toggle: publicProcedure
-    .input(z.object({ movieId: z.number().int().positive() }))
+  /** Sets the saved state explicitly, so optimistic clients and Undo can repeat it safely. */
+  set: publicProcedure
+    .input(z.object({ movieId: z.number().int().positive(), saved: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       const store = requireStore(ctx.watchlist);
       const viewerId = await ctx.viewer.getOrCreate();
-      const saved = await store.toggle({ viewerId, movieId: input.movieId });
-      return { movieId: input.movieId, saved };
+      await store.set({ viewerId, movieId: input.movieId, saved: input.saved });
+      return input;
     }),
 });

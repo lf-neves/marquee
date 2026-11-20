@@ -17,18 +17,21 @@ export async function listWatchlist(database: Database, viewerId: string): Promi
   return items.map((item) => item.movieId);
 }
 
-/** Saves the movie, or removes it when already saved. Resolves to whether it is saved afterwards. */
-export async function toggleWatchlist(
+/**
+ * Saves or removes a movie. Setting the state the row is already in does nothing, so repeated or
+ * concurrent requests (a double click, an Undo racing the original save) cannot fail or flip it.
+ */
+export async function setWatchlistItem(
   database: Database,
-  { viewerId, movieId }: { viewerId: string; movieId: number },
-): Promise<boolean> {
-  const { count } = await database.watchlistItem.deleteMany({ where: { viewerId, movieId } });
-  if (count > 0) return false;
-  // INSERT … ON CONFLICT DO NOTHING: a concurrent toggle that saved the same movie first is not an
-  // error (an upsert can still race on the unique key and throw P2002).
+  { viewerId, movieId, saved }: { viewerId: string; movieId: number; saved: boolean },
+): Promise<void> {
+  if (!saved) {
+    await database.watchlistItem.deleteMany({ where: { viewerId, movieId } });
+    return;
+  }
+  // INSERT … ON CONFLICT DO NOTHING: an upsert can still race on the unique key and throw P2002.
   await database.watchlistItem.createMany({
     data: [{ viewerId, movieId }],
     skipDuplicates: true,
   });
-  return true;
 }

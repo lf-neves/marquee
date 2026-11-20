@@ -104,9 +104,7 @@ test.describe('watchlist', () => {
     await page.goto('/movie/693134-dune-part-two');
     const save = page.getByRole('button', { name: 'Save to watchlist' });
     await Promise.all([
-      page.waitForResponse(
-        (response) => response.url().includes('watchlist.toggle') && response.ok(),
-      ),
+      page.waitForResponse((response) => response.url().includes('watchlist.set') && response.ok()),
       save.click(),
     ]);
 

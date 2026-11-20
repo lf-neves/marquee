@@ -27,11 +27,6 @@ export async function TrendingTodayRow() {
   );
 }
 
-export async function MyListRow() {
-  const saved = await getSavedMovies(20);
-  return <MovieRow title="My List" movies={saved} seeAll={{ href: paths.watchlist() }} />;
-}
-
 export async function BecauseYouSavedRow() {
   const saved = await getSavedMovies(20);
   const latest = saved[0];

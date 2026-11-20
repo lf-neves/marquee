@@ -1,7 +1,7 @@
 'use client';
 
+import { type MovieSummary } from '@marquee/tmdb/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { type ReactNode, createContext, use } from 'react';
 import { toast } from 'sonner';
 import { useTRPC } from '#/trpc/react';
@@ -20,67 +20,84 @@ export function WatchlistProvider({
 
 export const useWatchlistEnabled = () => use(WatchlistEnabled);
 
-/** Saved movie ids, shared by every save button and the header count through the query cache. */
-export function useWatchlistIds(): number[] {
+/**
+ * Saved movie ids, shared by every save button and the header count through the query cache.
+ * `undefined` until known: the server seeds it with the page, so a count never shows a false 0.
+ */
+export function useWatchlistIdsQuery(): number[] | undefined {
   const trpc = useTRPC();
   const enabled = useWatchlistEnabled();
-  const { data } = useQuery({ ...trpc.watchlist.ids.queryOptions(), enabled });
-  return data ?? [];
+  return useQuery({ ...trpc.watchlist.ids.queryOptions(), enabled }).data;
 }
 
-export function useToggleWatchlist() {
+export const useWatchlistIds = (): number[] => useWatchlistIdsQuery() ?? [];
+
+/** Saved movies, newest first; My List and the watchlist page render from this one cache entry. */
+export function useSavedMovies(): MovieSummary[] | undefined {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const router = useRouter();
-  const idsKey = trpc.watchlist.ids.queryKey();
-
-  return useMutation(
-    trpc.watchlist.toggle.mutationOptions({
-      // Flip the button at once; roll back if the server disagrees.
-      onMutate: async ({ movieId }) => {
-        await queryClient.cancelQueries({ queryKey: idsKey });
-        const previous = queryClient.getQueryData(idsKey);
-        queryClient.setQueryData(idsKey, (ids = []) =>
-          ids.includes(movieId) ? ids.filter((id) => id !== movieId) : [movieId, ...ids],
-        );
-        return { previous };
-      },
-      onError: (_error, { movieId }, context) => {
-        queryClient.setQueryData(idsKey, context?.previous);
-        // Replaces the optimistic "Added…" toast for the same movie.
-        toast('Couldn’t update your watchlist. Try again.', { id: watchlistToastId(movieId) });
-      },
-      onSettled: async () => {
-        await queryClient.invalidateQueries({ queryKey: trpc.watchlist.pathKey() });
-        // Server-rendered rows ("My List", "Because you saved…") read the same data.
-        router.refresh();
-      },
-    }),
-  );
+  const enabled = useWatchlistEnabled();
+  return useQuery({ ...trpc.watchlist.list.queryOptions(), enabled }).data;
 }
 
-const watchlistToastId = (movieId: number) => `watchlist-${movieId}`;
+const toastId = (movieId: number) => `watchlist-${movieId}`;
 
 /**
- * Saves or removes a movie and confirms it with an Undo toast. The toast shows at once, like the
- * button, because the outcome is known before the server answers; a failure replaces it.
+ * Saves or removes a movie. The ids and the saved list change in the cache at once, so the button,
+ * the header count, My List and the watchlist page all update before the server answers; a failure
+ * rolls both back. The callbacks live on the mutation, so they still run if the button unmounts,
+ * for example when its card leaves the watchlist page.
  */
-export function useWatchlistToggle(movie: { id: number; title: string }) {
-  const toggle = useToggleWatchlist();
+export function useWatchlistToggle(movie: MovieSummary) {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const saved = useWatchlistIds().includes(movie.id);
+  const idsKey = trpc.watchlist.ids.queryKey();
+  const listKey = trpc.watchlist.list.queryKey();
 
-  const run = () => {
-    toggle.mutate({ movieId: movie.id });
+  const mutation = useMutation(
+    trpc.watchlist.set.mutationOptions({
+      onMutate: async ({ saved: nextSaved }) => {
+        await queryClient.cancelQueries({ queryKey: trpc.watchlist.pathKey() });
+        const previous = {
+          ids: queryClient.getQueryData(idsKey),
+          list: queryClient.getQueryData(listKey),
+        };
+        queryClient.setQueryData(idsKey, (ids = []) => {
+          const others = ids.filter((id) => id !== movie.id);
+          return nextSaved ? [movie.id, ...others] : others;
+        });
+        queryClient.setQueryData(listKey, (list) => {
+          if (!list) return list;
+          const others = list.filter((item) => item.id !== movie.id);
+          return nextSaved ? [movie, ...others] : others;
+        });
+        return previous;
+      },
+      onError: (_error, _input, previous) => {
+        queryClient.setQueryData(idsKey, previous?.ids);
+        queryClient.setQueryData(listKey, previous?.list);
+        // Replaces the optimistic toast for the same movie.
+        toast('Couldn’t update your watchlist. Try again.', { id: toastId(movie.id) });
+      },
+      onSettled: () => queryClient.invalidateQueries({ queryKey: trpc.watchlist.pathKey() }),
+    }),
+  );
+
+  const setSaved = (nextSaved: boolean) => mutation.mutate({ movieId: movie.id, saved: nextSaved });
+
+  const toggle = () => {
+    const nextSaved = !saved;
+    setSaved(nextSaved);
     toast(
-      saved
-        ? `Removed “${movie.title}” from your watchlist.`
-        : `Added “${movie.title}” to your watchlist.`,
+      nextSaved
+        ? `Added “${movie.title}” to your watchlist.`
+        : `Removed “${movie.title}” from your watchlist.`,
       {
-        id: watchlistToastId(movie.id),
-        action: { label: 'Undo', onClick: () => toggle.mutate({ movieId: movie.id }) },
+        id: toastId(movie.id),
+        action: { label: 'Undo', onClick: () => setSaved(!nextSaved) },
       },
     );
   };
 
-  return { saved, toggle: run };
+  return { saved, toggle };
 }

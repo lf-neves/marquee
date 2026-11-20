@@ -1,4 +1,5 @@
 import { getMovie, getTrending } from '#/server/catalog';
+import { summaryOf } from '#/lib/movie-card';
 import { paths } from '#/lib/paths';
 import { Billboard, type BillboardMovie } from './billboard';
 
@@ -21,6 +22,8 @@ export async function HomeBillboard() {
       score: movie.score,
       voteCount: movie.voteCount,
       backdropPath: movie.backdropPath,
+      blur: movie.blur.backdrop ?? null,
+      summary: summaryOf(movie),
       trailer: detail?.trailer ?? null,
     };
   });

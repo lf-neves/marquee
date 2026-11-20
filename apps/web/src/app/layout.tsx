@@ -1,11 +1,12 @@
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata, type Viewport } from 'next';
 import { Big_Shoulders, Geist, Geist_Mono } from 'next/font/google';
-import { type ReactNode } from 'react';
+import { type ReactNode, Suspense } from 'react';
 import { AskProvider } from '#/ask/ask-provider';
 import { SiteHeader } from '#/components/layout/site-header';
 import { Toaster } from '#/components/ui/sonner';
 import { WatchlistProvider } from '#/components/watchlist/watchlist-provider';
+import { WatchlistSeed } from '#/components/watchlist/watchlist-seed';
 import { askEnabled, watchlistEnabled } from '#/server/env';
 import { TRPCReactProvider } from '#/trpc/react';
 import './globals.css';
@@ -48,6 +49,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+      <head>
+        {/* Opens the connection to TMDB's image CDN while the HTML is still arriving. */}
+        <link rel="preconnect" href="https://image.tmdb.org" />
+      </head>
       <body>
         <a
           href="#main"
@@ -58,6 +63,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <TRPCReactProvider>
           <WatchlistProvider enabled={watchlistEnabled}>
             <AskProvider enabled={askEnabled}>
+              {/* Saved ids for the header count and save buttons, streamed with every page. */}
+              <Suspense fallback={null}>
+                <WatchlistSeed />
+              </Suspense>
               <SiteHeader />
               <main id="main" tabIndex={-1} className="min-h-[calc(100dvh-64px)] outline-none">
                 {children}
