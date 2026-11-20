@@ -3,13 +3,14 @@ import { type AskEvent } from '#/ask/protocol';
 import { fallbackQuery, runKeywordFallback } from './fallback';
 import { createFixtureCatalog } from './fixture-catalog';
 
-async function run(text: string) {
+async function run(text: string, why?: 'off' | 'unavailable') {
   const events: AskEvent[] = [];
   await runKeywordFallback({
     text,
     catalog: createFixtureCatalog(),
     region: 'US',
     emit: (event) => events.push(event),
+    why,
   });
   return events;
 }
@@ -22,6 +23,17 @@ describe('runKeywordFallback', () => {
     expect(text).toMatchObject({ delta: expect.stringContaining('switched off') });
     expect(events.find((event) => event.type === 'picks')).toMatchObject({
       movies: [{ title: 'Dune: Part Two', reason: 'Title match for “Dune”.' }, { title: 'Dune' }],
+    });
+  });
+
+  test('says the AI is unavailable when Claude refused the request', async () => {
+    const events = await run('Parasite', 'unavailable');
+
+    expect(events.find((event) => event.type === 'text')).toMatchObject({
+      delta: expect.stringContaining('unavailable right now'),
+    });
+    expect(events.find((event) => event.type === 'picks')).toMatchObject({
+      movies: [{ title: 'Parasite' }],
     });
   });
 

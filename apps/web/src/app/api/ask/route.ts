@@ -1,6 +1,6 @@
 import { type AskEvent, askRequest, encodeAskEvent } from '#/ask/protocol';
 import { runAskAgent } from '#/server/ask/agent';
-import { toAskError } from '#/server/ask/errors';
+import { isClaudeUnavailable, toAskError } from '#/server/ask/errors';
 import { runKeywordFallback } from '#/server/ask/fallback';
 import { askRateLimiter, clientAddress } from '#/server/ask/rate-limit';
 import { catalog } from '#/server/catalog';
@@ -51,8 +51,10 @@ export async function POST(request: Request): Promise<Response> {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let open = true;
+      let answered = false;
       const emit = (event: AskEvent) => {
         if (!open) return;
+        if (event.type === 'text' || event.type === 'picks') answered = true;
         try {
           controller.enqueue(encoder.encode(encodeAskEvent(event)));
         } catch {
@@ -69,7 +71,18 @@ export async function POST(request: Request): Promise<Response> {
         emit({ type: 'done' });
       } catch (error) {
         const event = request.signal.aborted ? null : toAskError(error);
-        if (event) emit(event);
+        // The viewer sees a friendly message; the cause goes to the server log.
+        if (event) console.error('Ask Marquee failed', error);
+        if (event && !answered && isClaudeUnavailable(error)) {
+          // A billing or key problem should not leave the chat dead: answer with title search.
+          const text = history.at(-1)?.content ?? '';
+          await runKeywordFallback({ text, catalog, region, emit, why: 'unavailable' }).then(
+            () => emit({ type: 'done' }),
+            () => emit(event),
+          );
+        } else if (event) {
+          emit(event);
+        }
       } finally {
         if (open) controller.close();
         open = false;

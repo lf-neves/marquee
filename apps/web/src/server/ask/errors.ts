@@ -3,6 +3,7 @@ import {
   APIError,
   APIUserAbortError,
   AuthenticationError,
+  BadRequestError,
   InternalServerError,
   PermissionDeniedError,
   RateLimitError,
@@ -63,3 +64,12 @@ export function toAskError(error: unknown): AskErrorEvent | null {
   }
   return { type: 'error', code: 'failed', message: 'Something went wrong. Try again.' };
 }
+
+/**
+ * Claude refused for a reason retrying won't fix: a bad key, a permission problem, or a 400 such as
+ * an exhausted credit balance. The route then answers with title search instead of an error.
+ */
+export const isClaudeUnavailable = (error: unknown) =>
+  error instanceof AuthenticationError ||
+  error instanceof PermissionDeniedError ||
+  error instanceof BadRequestError;

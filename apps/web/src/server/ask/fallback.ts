@@ -23,11 +23,14 @@ export async function runKeywordFallback({
   catalog,
   region,
   emit,
+  why = 'off',
 }: {
   text: string;
   catalog: Catalog;
   region: string;
   emit: (event: AskEvent) => void;
+  /** `off`: no Claude key is configured. `unavailable`: Claude refused the account's requests. */
+  why?: 'off' | 'unavailable';
 }): Promise<void> {
   const query = fallbackQuery(text);
   emit({
@@ -45,7 +48,9 @@ export async function runKeywordFallback({
   const movies = details.flatMap((movie) => (movie ? [toAskPick({ movie, reason, region })] : []));
 
   const intro =
-    'Ask Marquee’s AI is switched off on this deployment, so it answers with title search.';
+    why === 'off'
+      ? 'Ask Marquee’s AI is switched off on this deployment, so it answers with title search.'
+      : 'Ask Marquee’s AI is unavailable right now, so it answers with title search.';
   emit({
     type: 'text',
     delta: usingSearch
