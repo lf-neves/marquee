@@ -86,7 +86,7 @@ jobs:
           key: nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/src/**', 'packages/*/src/**', 'apps/web/next.config.ts') }}
           restore-keys: |
             nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm -C apps/web exec playwright install --with-deps chromium
       - run: pnpm test:e2e
         env:
           TMDB_FIXTURES: '1'
