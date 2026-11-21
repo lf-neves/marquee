@@ -127,18 +127,21 @@ imports Next.js. That keeps every package testable in plain Node.
 
 ## Performance
 
-Lighthouse 13.6, mobile profile (simulated slow 4G and a 4× slower CPU), on a local production
-build with live TMDB data:
+Lighthouse 13.6 on the live site, mobile profile (simulated slow 4G and a 4× slower CPU), median of
+several runs:
 
 | Page | Performance | Largest Contentful Paint | Total Blocking Time | Layout shift |
 | --- | --- | --- | --- | --- |
-| Home | 99 | 1.5 s | 20 ms | 0 |
-| Movie | 93 | 3.2 s | 10 ms | 0 |
-| Trending | 84 | 4.4 s | 20 ms | 0 |
+| Home | 81 | 4.8 s | 140 ms | 0 |
+| Movie | 90 | 3.6 s | 10 ms | 0 |
+| Trending | 86 | 4.1 s | 60 ms | 0 |
 
-Accessibility, best practices and SEO score 96–100 on the live site. The trending page is the one
-to improve next: its grid depends on the `window` query parameter, so its first poster arrives with
-the streamed part of the response instead of the static shell.
+Accessibility, best practices and SEO score 96–100. Two notes:
+
+- The largest paint is the hero backdrop, about 96 KB from TMDB's CDN, so the simulated slow
+  connection dominates it. A local production build scores 99 on the home page, with LCP at 1.5 s.
+- A cold first run sometimes shows a single 2-second main-thread task that Lighthouse cannot
+  attribute to any script; repeat runs don't.
 
 ## Tests
 
@@ -195,6 +198,8 @@ image loading tuned for slow connections, and tests and CI that keep it honest.
   responses, so prompt or model changes can't quietly make answers worse.
 - **Trending page in the static shell:** move the window choice into the path, so the first posters
   ship with the shell.
+- **A lighter hero on phones:** TMDB's backdrops jump from 300 to 780px wide, so phones download the
+  780px file for the hero; a smaller crop would cut the largest paint on slow connections.
 - **A country and language picker,** with localized TMDB data (pt-BR first).
 - **Observability:** Sentry and OpenTelemetry traces for TMDB and Claude calls, next to the Speed
   Insights already in place.
