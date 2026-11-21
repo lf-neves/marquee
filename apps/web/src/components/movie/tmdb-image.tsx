@@ -20,7 +20,7 @@ type TmdbImageProps = {
 };
 
 /**
- * TMDB artwork that fills its positioned parent. It sits on a blurred inline preview and fades in
+ * TMDB artwork that fills its positioned parent. It sits on a tiny inline preview and fades in
  * once fully loaded. Images that have not started painting when the page hydrates wait hidden for
  * their load event; images already painting before hydration stay visible, so nothing flashes.
  */
@@ -38,8 +38,10 @@ export function TmdbImage({
 
   useLayoutEffect(() => {
     const element = image.current;
+    // The preloaded hero is the page's largest paint; fading it in would only delay that paint.
+    if (preload) return;
     if (element && !element.complete && element.naturalWidth === 0) setPhase('waiting');
-  }, []);
+  }, [preload]);
 
   if (!path) {
     return (
@@ -58,10 +60,15 @@ export function TmdbImage({
 
   return (
     <>
+      {/*
+        The 16px preview is upscaled by the browser, which already renders it soft. A CSS blur()
+        filter on every tile looked marginally smoother but cost over a second of main-thread time
+        on a throttled phone, so there is none.
+      */}
       {blurDataUrl ? (
         <span
           aria-hidden
-          className="absolute inset-0 scale-110 bg-cover bg-center blur-xl"
+          className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${blurDataUrl})` }}
         />
       ) : null}

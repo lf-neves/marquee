@@ -11,7 +11,12 @@
     "es2024": true
   },
   "rules": {
-    "no-console": ["warn", { "allow": ["error", "warn"] }],
+    "no-console": [
+      "warn",
+      {
+        "allow": ["error", "warn"]
+      }
+    ],
     "react-hooks/exhaustive-deps": "warn",
     "react-hooks/rules-of-hooks": "error",
     "react/react-in-jsx-scope": "off",
@@ -30,7 +35,7 @@
   ],
   "overrides": [
     {
-      "files": ["**/*.test.ts", "**/*.test.tsx", "**/e2e/**", "**/*.config.ts"],
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/e2e/**", "**/*.config.ts", "scripts/**"],
       "rules": {
         "no-console": "off"
       }
